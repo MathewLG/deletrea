@@ -1,0 +1,26 @@
+{
+  "name": "deletrea",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Practice the manual alphabet of Mexican Sign Language (LSM) with your camera. Static site, no backend.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test 'tests/unit/*.test.js'",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json",
+    "serve": "node scripts/serve.mjs",
+    "test:e2e": "playwright test",
+    "contrast": "node scripts/contrast.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run contrast"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.3",
+    "eslint": "10.1.0",
+    "playwright": "1.63.0",
+    "typescript": "6.0.3"
+  }
+}
