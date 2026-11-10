@@ -1,0 +1,214 @@
+/* Base: reset, type, links, buttons, focus. No shadows, gradients, blur or glow anywhere. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: clamp(1.625rem, 1.2rem + 2vw, 2.125rem);
+}
+
+h2 {
+  font-size: 1.375rem;
+}
+
+h3 {
+  font-size: 1.125rem;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol,
+dl {
+  margin: 0;
+  padding: 0;
+}
+
+img,
+svg,
+canvas,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+a {
+  color: var(--red);
+  font-weight: 600;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--ink);
+}
+
+/* Focus: 3px ink outline separated from the element by a strip of the ground colour. */
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Headings receive focus only so screen readers start reading the new screen there;
+   they are not controls, so they get no focus ring. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+main:focus {
+  outline: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Buttons: 6px radius so they read as touchable against the square cells. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--target);
+  min-width: var(--target);
+  padding: 0.5rem 1.125rem;
+  border: var(--rule) solid var(--ink);
+  border-radius: var(--radius-control);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.btn:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.btn--primary {
+  background: var(--red);
+  color: var(--bone);
+}
+
+.btn--primary:hover {
+  background: var(--ink);
+  color: var(--bone);
+}
+
+.btn--secondary {
+  background: var(--bone);
+}
+
+.btn--quiet {
+  background: transparent;
+  border-color: var(--ink-soft);
+}
+
+.btn--quiet[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bone);
+}
+
+.btn--wide {
+  width: 100%;
+}
+
+.text-input {
+  display: block;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.5rem 0.75rem;
+  border: var(--rule) solid var(--ink);
+  border-radius: var(--radius-control);
+  background: var(--bone);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.form-error:empty {
+  display: none;
+}
+
+.form-error {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.noscript {
+  padding: var(--space-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

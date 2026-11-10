@@ -71,7 +71,7 @@ The hand is the hero of every screen.
 - Each part is drawn twice: first in ink at width w + 2 × contour, then in its fill color at width w. That produces a constant outline around flat color.
 - Parts are painted far to near (painter's order by depth), so a thumb crossing in front of the fingers overlaps them with its outline intact.
 - Neutral fill: bone. A finger that matches the target fills turquoise and gains a small ink bead at its tip, so the state is not carried by color alone.
-- A wrist cuff: two flat bands (red, ochre) across a short forearm stub. It anchors the hand and is the one ornamental element on the figure.
+- A wrist cuff: two flat bands (red, ochre) across a short forearm stub. It anchors the hand and is the one ornamental element on the figure. Where the speech scroll is already on screen (the home hand), the second band is bone with its ink outline, so ochre appears once.
 - Target hand and live hand use the same renderer.
 
 ## Layout

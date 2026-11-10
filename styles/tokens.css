@@ -1,0 +1,40 @@
+/* Design tokens from DESIGN.md. scripts/contrast.mjs parses the hex values below. */
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  src: url("../assets/fonts/AtkinsonHyperlegibleNext-Variable.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --paper: #F3EADA;
+  --paper-deep: #E7DAC0;
+  --ink: #1E1916;
+  --ink-soft: #574B41;
+  --red: #A3271F;
+  --turquoise: #14656A;
+  --turquoise-fill: #3FA9A6;
+  --ochre: #D39A2C;
+  --bone: #FBF6EA;
+
+  --font: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+
+  --rule: 2px;
+  --radius-control: 6px;
+  --target: 2.75rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2.25rem;
+  --space-7: 3.5rem;
+
+  --content-max: 34rem;
+  --ease: cubic-bezier(0.3, 0, 0.2, 1);
+  --t-hand: 300ms;
+  --t-scroll: 400ms;
+}

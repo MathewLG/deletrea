@@ -1,0 +1,547 @@
+/* Screen-specific layout. The cell holding the hand is always the largest thing on screen. */
+
+.hand-canvas {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.target-letter {
+  display: block;
+  font-size: clamp(6rem, 34vw, 12rem);
+  font-weight: 800;
+  line-height: 0.82;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Inicio ---------- */
+.home-hand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.home-hand__figure {
+  position: relative;
+  min-width: 0;
+}
+
+.home-hand__figure .hand-canvas {
+  aspect-ratio: 1 / 1.08;
+}
+
+.home-hand__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 6.5rem;
+  padding: var(--space-4) var(--space-3);
+  border-left: var(--rule) solid var(--red);
+  background: var(--paper);
+}
+
+.home-hand__caption {
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.home-hand__letter {
+  font-size: clamp(4rem, 22vw, 7.5rem);
+  font-weight: 800;
+  line-height: 0.9;
+}
+
+.home-hand__word {
+  display: flex;
+  gap: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.home-hand__char {
+  padding: 0 0.125rem;
+  border-bottom: 4px solid transparent;
+}
+
+.home-hand__char.is-current {
+  border-bottom-color: var(--red);
+}
+
+/* ---------- Alfabeto ---------- */
+.alpha-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.alpha-grid__item {
+  display: flex;
+  border-right: var(--rule) solid var(--red);
+  border-bottom: var(--rule) solid var(--red);
+}
+
+.alpha-cell {
+  position: relative;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  aspect-ratio: 1 / 1.08;
+  padding: var(--space-2);
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.alpha-cell:hover {
+  background: var(--bone);
+  color: var(--ink);
+}
+
+.alpha-cell:focus-visible {
+  outline-offset: -5px;
+}
+
+.alpha-cell__letter {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.alpha-cell__hand {
+  grid-row: 1;
+  width: calc(100% - 1.25rem);
+  height: 100%;
+  min-height: 0;
+  margin-left: 1.25rem;
+}
+
+/* Inside the grid the tag is a plain label on a rule: a boxed tag would not fit a phone cell. */
+.alpha-cell .tag {
+  grid-row: 2;
+  padding: 0.125rem 0 0;
+  border: 0;
+  border-top: var(--rule) solid var(--ink);
+  background: none;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+
+@media (max-width: 21rem) {
+  .alpha-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The grid sits flush in its cell, so the cell's own right and bottom rules close it. */
+.cell--flush .alpha-grid {
+  margin: 0 calc(-1 * var(--rule)) calc(-1 * var(--rule)) 0;
+}
+
+@media (min-width: 30rem) {
+  .alpha-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .site-main:has(.cells--wide),
+  body:has(.cells--wide) .site-header,
+  body:has(.cells--wide) .nav__list {
+    max-width: calc(58rem + 2 * var(--space-4));
+  }
+
+  .alpha-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Letra ---------- */
+.letter-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.letter-stage .hand-canvas--large {
+  max-height: 70vh;
+  touch-action: none;
+  cursor: grab;
+}
+
+.letter-stage .hand-canvas--large:active {
+  cursor: grabbing;
+}
+
+.letter-stage .hand-canvas--large:focus-visible {
+  outline-offset: -6px;
+}
+
+.letter-stage__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--rule) solid var(--red);
+  background: var(--paper);
+}
+
+.letter-stage__controls .quiet {
+  flex: 1 1 14rem;
+  font-size: 0.9375rem;
+}
+
+.pager {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  padding: 0;
+}
+
+.pager__link {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+  min-height: 3.5rem;
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.pager__link:hover {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+
+.pager__link:focus-visible {
+  outline-offset: -5px;
+}
+
+.pager__link--mid {
+  border-inline: var(--rule) solid var(--red);
+  align-items: center;
+  color: var(--red);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+.pager__link--end {
+  align-items: flex-end;
+}
+
+.pager__dir {
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.pager__letter {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+/* ---------- Práctica ---------- */
+.stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--paper-deep);
+}
+
+.stage__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+/* Flat paper tint so the drawn hand stays the clearest thing over the video. */
+.stage__tint {
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  opacity: 0.55;
+}
+
+.stage__hand {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.stage__note {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  max-width: 100%;
+  padding: var(--space-1) var(--space-3);
+  border-top: var(--rule) solid var(--red);
+  border-right: var(--rule) solid var(--red);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* Opacity, not display: none: iOS Safari stops feeding frames from a video that is not rendered. */
+.running.is-synthetic .stage__video,
+.running.is-synthetic .stage__tint,
+.running.is-observe .stage__video,
+.running.is-observe .stage__tint,
+.stage.is-video-hidden .stage__video,
+.stage.is-video-hidden .stage__tint {
+  opacity: 0;
+}
+
+/* Keeps the video in the document, unseen, while the stage is off the page (requesting, loading). */
+.video-dock {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.target {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.target__ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(7.5rem, 38vw, 11rem);
+  aspect-ratio: 1;
+}
+
+.target__ring .hold-ring {
+  position: absolute;
+  inset: 0;
+}
+
+.target__ring .target-letter {
+  position: relative;
+  font-size: clamp(4.5rem, 23vw, 7rem);
+  line-height: 1;
+}
+
+.target.is-success .target-letter {
+  color: var(--turquoise);
+}
+
+.stage__scroll {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.target__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.target__label {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.target__hand {
+  width: 100%;
+  max-width: 7.5rem;
+  aspect-ratio: 1;
+  background: var(--paper-deep);
+  border: var(--rule) solid var(--ink);
+}
+
+.target__how {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target);
+}
+
+.hint-cell {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.hint {
+  min-height: 1.6em;
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.target.is-success ~ .hint-cell .hint {
+  color: var(--turquoise);
+}
+
+.movement:empty {
+  display: none;
+}
+
+.movement {
+  margin-top: var(--space-2);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.controls .btn {
+  flex: 1 1 auto;
+}
+
+.practice-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.practice-head .screen-title {
+  max-width: none;
+  font-size: 1.625rem;
+}
+
+.running.is-observe .hint {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: 600;
+}
+
+.progress__glyph {
+  display: flex;
+}
+
+.details summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--target);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.details__body {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  border: var(--rule) solid var(--ink-soft);
+  background: var(--bone);
+  font: inherit;
+  font-size: 0.9375rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.letters-line {
+  font-weight: 600;
+}
+
+.tally {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2) var(--space-4);
+}
+
+.tally dt {
+  font-weight: 800;
+}
+
+.tally dd {
+  margin: 0;
+}
+
+.tally__count {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 1.375rem;
+  font-weight: 800;
+}
+
+.debug {
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--rule) solid var(--ink);
+  background: var(--bone);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
+
+/* ---------- Deletrear ---------- */
+.spell-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.spell-preview {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.spell-cell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: 4.75rem;
+  margin: 0 calc(-1 * var(--rule)) calc(-1 * var(--rule)) 0;
+  padding: var(--space-1);
+  border: var(--rule) solid var(--red);
+  background: var(--paper-deep);
+}
+
+.spell-cell__letter {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.spell-cell__hand {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.spell-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--rule);
+}
