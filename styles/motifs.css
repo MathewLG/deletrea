@@ -1,0 +1,115 @@
+/* Codex motifs: stepped fret, speech scroll, bar-and-dot numerals, hold ring. */
+
+.fret {
+  width: 100%;
+  height: 18px;
+}
+
+.fret__line {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 2;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.fret__edge {
+  fill: var(--red);
+}
+
+.voluta {
+  width: 3.5rem;
+  height: 3.5rem;
+  overflow: visible;
+}
+
+.voluta path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.voluta__ink {
+  stroke: var(--ink);
+  stroke-width: 10;
+}
+
+.voluta__fill {
+  stroke: var(--ochre);
+  stroke-width: 5.5;
+}
+
+.voluta--draw path {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  animation: voluta-draw var(--t-scroll) var(--ease) forwards;
+}
+
+@keyframes voluta-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.numeral {
+  flex: none;
+}
+
+.numeral__mark {
+  fill: var(--ink);
+}
+
+.numeral__zero {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.hold-ring {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hold-ring circle {
+  fill: none;
+}
+
+.hold-ring__ink {
+  stroke: var(--ink);
+  stroke-width: 12;
+}
+
+.hold-ring__track {
+  stroke: var(--paper);
+  stroke-width: 7;
+}
+
+.hold-ring__fill {
+  stroke: var(--ochre);
+  stroke-width: 7;
+  /* A zero-length dash draws nothing, so an empty ring shows no sliver. */
+  stroke-dasharray: var(--hold, 0) 1;
+  transform: rotate(-90deg);
+  transform-origin: 50px 50px;
+}
+
+/* A scroll anchored at a fingertip: the start of the curl sits just above the tip. */
+.voluta--anchored {
+  position: absolute;
+  left: var(--sx, 50%);
+  top: var(--sy, 50%);
+  width: clamp(2.75rem, 16%, 4.5rem);
+  height: auto;
+  aspect-ratio: 1;
+  transform: translate(-10%, -96%);
+  pointer-events: none;
+}
+
+.voluta--anchored.voluta--flip {
+  transform: translate(-90%, -96%) scaleX(-1);
+}
+
+.voluta--anchored.is-hidden {
+  visibility: hidden;
+}

@@ -11,6 +11,8 @@ Sitio publicado: https://mathewlg.github.io/deletrea/ (pendiente de activar).
 - Las señas **no han sido validadas por personas Sordas usuarias de LSM**. Salen de fuentes publicadas y pueden tener errores. Ver [`docs/VALIDATION.md`](docs/VALIDATION.md).
 - Los umbrales de reconocimiento se ajustaron con un modelo de mano sintético, **no con grabaciones de manos reales**.
 - Las letras con movimiento se muestran, pero **no se reconocen**.
+- Una mano abierta y relajada, con los dedos un poco separados, puede pasar como B.
+- Una mano plana que muestra el dorso a la cámara, hecha con la otra mano, también puede pasar como B: con la mano plana no se puede saber por la forma qué mano es, así que se prueban las dos.
 - El rastreador de manos y su modelo se descargan de una CDN la primera vez que se usa la cámara.
 - El alfabeto manual no es la lengua. La LSM es mucho más que deletrear.
 
@@ -40,6 +42,10 @@ npm run test:e2e   # pruebas en navegador (Chromium, tamaño de teléfono)
 Si ya tienes Chrome, `CHROME_PATH=/ruta/a/chrome npm run test:e2e` lo usa en lugar del Chromium de Playwright.
 
 Todavía no hay `package-lock.json`. La primera vez que alguien ejecute `npm install` en local debe generarlo y subirlo al repositorio. Mientras tanto, la integración continua usa `npm install`.
+
+## Publicación
+
+El sitio se publica en GitHub Pages con `.github/workflows/pages.yml`, que corre solo cuando la integración continua pasa en `main` y publica ese mismo commit. Antes de la primera publicación hay que hacer un paso a mano, una sola vez: en el repositorio, Settings, Pages, Source, elige "GitHub Actions".
 
 ## Estructura
 
