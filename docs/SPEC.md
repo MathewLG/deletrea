@@ -73,8 +73,9 @@ viewToCamera(points: Vec3[], opts?: {scale?: number}): Vec3[]   // (x,-y,-z) * s
 lerpPose(a: HandPose, b: HandPose, t: number): HandPose
 
 // features.js
-extractFeatures(world: Vec3[], handednessHint?: 'right'|'left'|null): Features | null
+extractFeatures(world: Vec3[], handednessHint?: 'right'|'left'|null, opts?: {force?: 'right'|'left'}): Features | null
 // world = 21 landmarks in the camera frame. Returns null when the input is not 21 finite points.
+// The hint is used only when the shape is inconclusive; `force` skips the inference.
 
 // match.js
 buildTarget(sign: Sign): Target             // precomputed features of the sign's own pose
@@ -101,7 +102,8 @@ Bone lengths must be identical in every pose (tested).
 
 `extractFeatures` converts to the view frame, then:
 1. `distal = normalize(P9 - P0)`; `radial = normalize((P5 - P17) minus its component along distal)`; `n = radial × distal`.
-2. Handedness: compute, assuming a right hand, the canonical z of each non-thumb finger's PIP, DIP and tip minus its MCP, plus the thumb IP and tip. Sum them (palm units). If the sum is above +0.15 the hand is right, below -0.15 left, otherwise use the hint (default right). Fingers can only curl toward the palm, so this does not depend on the tracker's label convention.
+2. Handedness: compute, assuming a right hand, the canonical z of each non-thumb finger's PIP, DIP and tip minus its MCP, plus the thumb IP and tip. Sum them (palm units). If the sum is above +0.6 the hand is right, below -0.6 left, and `handednessConfident` is true. Fingers can only curl toward the palm, so a curled hand shows its side by its shape. Inside the margin (a flat or nearly flat hand) the shape cannot tell a right palm from a left back, so `handednessConfident` is false and the side falls back to the hint (default right). The margin is 0.6, not the 0.15 first planned, because a flat hand with slightly hyperextended fingers sums below zero and the noise tests (section 7, test 5) flipped near-flat hands at 0.15.
+   The tracker's Left/Right label is not trusted: the docs disagree on whether it assumes a mirrored image, and it could not be checked on a real camera. The practice session passes no hint. When `handednessConfident` is false it extracts features for both sides (`opts.force`), matches both against the target and keeps the better result (an `ok` result wins, then the higher score). When confident it uses the geometric answer. The tracker's label appears only in the `?debug=1` overlay, next to the side actually used. The cost of this is in section 14: a flat hand cannot be told from the mirror image of the other hand.
 3. `palmar = n` for right, `-n` for left. Canonical point = `((p-P0)·radial, (p-P0)·distal, (p-P0)·palmar) / palmLength`.
 4. Joint angles in degrees, each the angle between consecutive bone vectors: non-thumb `mcp` (wrist→MCP vs MCP→PIP), `pip`, `dip`; thumb `mcp` (CMC→MCP vs MCP→IP), `ip`.
 5. Orientation for comparison: `palmar` and `distal` in the view frame, with X negated for a left hand.
@@ -109,6 +111,7 @@ Bone lengths must be identical in every pose (tested).
 ```js
 /** @typedef {Object} Features
  * @property {'right'|'left'} handedness
+ * @property {boolean} handednessConfident     false when the hand is too flat for its shape to show its side
  * @property {number} palmLength
  * @property {Vec3[]} local                     canonical right-hand points, palm units
  * @property {{index:{mcp:number,pip:number,dip:number}, middle:..., ring:..., pinky:..., thumb:{mcp:number,ip:number}}} angles
@@ -121,7 +124,7 @@ Bone lengths must be identical in every pose (tested).
 `ramp(e, full, zero)` is 1 when e ≤ full, 0 when e ≥ zero, linear between. A part is `ok` when its score ≥ 0.5.
 
 - **Finger curl** (index to pinky): `e = sqrt((Δmcp² + Δpip² + 0.5·Δdip²) / 2.5)`; score `ramp(e, 18, 48)`.
-- **Adjacent pairs** (index-middle, middle-ring, ring-pinky), only when both fingers are extended in the target (target mcp + pip < 60): compare the signed gap `tipA.x - tipB.x` (canonical), score `ramp(|Δgap|, 0.12, 0.30)`. This separates together, apart and crossed. A pair score lowers both fingers' scores (take the minimum).
+- **Adjacent pairs** (index-middle, middle-ring, ring-pinky), only when both fingers are extended in the target (target mcp + pip < 60): compare the signed gap `tipA.x - tipB.x` (canonical), score `ramp(|Δgap|, 0.15, 0.35)`. The first plan was 0.12/0.30; the noise tests (section 7, test 5) failed with fingers together at that width, so it was widened. The cost is in section 14: a relaxed hand with slightly spread fingers can pass as B. This separates together, apart and crossed. A pair score lowers both fingers' scores (take the minimum).
 - **Thumb**: position error of the thumb tip in canonical coordinates, `ramp(e, 0.20, 0.50)`; and for the fingertip nearest the thumb tip in the target, the difference in thumb-tip-to-fingertip distance, `ramp(|Δ|, 0.22, 0.50)`. Thumb score is the minimum.
 - **Orientation**: `min(ramp(angle between palmars, 50, 85), ramp(angle between distals, 40, 75))`. A sign may set `looseOrientation: true`, which widens both ramps by 25 degrees.
 - Per-sign overrides: `sign.tolerance` may relax a part, for example `{thumb: 1.5}` multiplies both thumb ramp bounds. Used where the research shows accepted variation (A, E).
@@ -142,12 +145,12 @@ Hint selection: if orientation is not ok, the hint is about orientation; otherwi
 `curl_more`, `curl_less`, `bend_knuckle`, `straighten_knuckle`, `bend_tip`, `straighten_tip`,
 `together`, `apart`, `cross`,
 `thumb_toward_palm`, `thumb_away`, `thumb_front`, `thumb_back`, `thumb_up`, `thumb_down`, `thumb_touch`.
-For curl hints, pick the joint with the largest difference: mcp gives the knuckle codes, pip gives `curl_more` / `curl_less`, dip gives the tip codes. For the thumb, pick the canonical axis with the largest error: x gives `thumb_away` (needs more +x) or `thumb_toward_palm`, y gives up/down, z gives front/back; if the contact term is the limiting one, `thumb_touch` with `other` set.
+For curl hints, pick the joint with the largest difference: mcp gives the knuckle codes, pip gives `curl_more` / `curl_less`, dip gives the tip codes. For the thumb, pick the canonical axis with the largest error: x gives `thumb_away` (needs more +x) or `thumb_toward_palm`, y gives up/down, z gives front/back; if the contact term is the limiting one because the thumb is too far, `thumb_touch` with `other` set. If the contact term is limiting because the contact distance is smaller than the target's (another finger moved toward the thumb, as a curled pinky does in B), the thumb is ranked by its position score when choosing the hint, so the hint goes to the finger that moved. `ok` and `score` still use the full thumb score.
 
 ### 5.4 Smoothing and hold
 
 - One Euro filter per coordinate, defaults `minCutoff 1.2`, `beta 0.02`, `dCutoff 1.0`. Resets when the hand disappears.
-- Hold: `done` after `ok` has been true for `holdMs` (default 700) allowing gaps up to `graceMs` (default 180). `progress` rises linearly and falls back to 0 after a gap longer than the grace.
+- Hold: held time accumulates only between consecutive `ok` frames, each step capped at 100 ms, so a slow camera (5 fps) still completes but cannot finish in a few frames. `done` when held time reaches `holdMs` (default 700). During a gap of not-ok frames shorter than `graceMs` (default 180, measured from the last ok frame) progress pauses; the gap itself is never credited. A longer gap resets held time to 0. Silence between two ok frames longer than the 100 ms step plus the grace (for example a hidden page) also resets it. `progress = held / holdMs`.
 
 ## 6. Sign data (`src/signs/alphabet.js`)
 
@@ -163,6 +166,7 @@ For curl hints, pick the joint with the largest difference: mcp gives the knuckl
  * @property {string} description        Spanish, one or two sentences, how to form it
  * @property {string} [movement]         Spanish, dynamic letters only
  * @property {'alta'|'media'|'baja'} confidence   from the research table
+ * @property {string} [confidenceNote]   replaces the generic confidence sentence when the rating needs explaining
  * @property {string[]} sources          keys from the research file, e.g. ['DAK','CRUZ']
  * @property {string[]} [confusable]     ids this engine cannot reliably tell apart from this one
  */
@@ -187,8 +191,8 @@ Static (21), orientation "front" = palmar (0,0,1), distal (0,1,0):
 - H: as G with index and middle together.
 - I: fist with pinky up, thumb over the fingers. Front.
 - L: index up, thumb out sideways, others closed. Front.
-- M: index, middle, ring extended together pointing down, pinky closed, thumb across the palm. Palm toward the signer: palmar (0,0,-1), distal (0,-1,0). Sources differ on whether the bend is at the wrist or the knuckles: judge mainly direction, relax finger tolerance.
-- N: as M with index and middle only.
+- M: index, middle, ring extended together pointing down, pinky closed. The thumb is not visible in any source ("across the palm" is a reading of CRUZ's notation), so the description says so instead of placing it. Palm toward the signer: palmar (0,0,-1), distal (0,-1,0). Sources differ on whether the bend is at the wrist or the knuckles: judge mainly direction, relax finger tolerance.
+- N: as M with index and middle only. Thumb as in M.
 - O: all fingertips meet the thumb tip in a circle. Sideways-diagonal like C.
 - P: index extended up, middle bent 90 degrees at the knuckle pointing forward, thumb touching the middle finger between them, ring and pinky closed. Palm sideways: palmar ≈ (1,0,0), distal up. Loose orientation.
 - R: index and middle extended and crossed (middle over index), thumb over the closed ring and pinky. Front.
@@ -197,11 +201,11 @@ Static (21), orientation "front" = palmar (0,0,1), distal (0,1,0):
 - U: index and middle extended together, thumb over ring and pinky. Front.
 - V: index and middle extended apart. Front.
 - W: index, middle, ring extended apart, thumb holding the closed pinky. Front.
-- Y: thumb and pinky extended in opposite directions, others closed. Hand sideways with palm toward the signer (thumb up, pinky toward +X); two sources show palm front. Loose orientation.
+- Y: thumb and pinky extended in opposite directions, others closed. Hand sideways with palm toward the signer (thumb up, pinky toward +X); two sources show palm front. Loose orientation. Confidence `media` because its orientation is rated media; `confidenceNote` explains that the handshape is agreed and the orientation is not.
 
-With movement (6): J (I handshape, pinky traces a J), K (P handshape with a wrist turn; sources disagree on the turn), Ñ (N handshape with a side-to-side sway), Q (hand hanging from the wrist, index and thumb pointing down, with a sway; index shape varies), X (fist with hooked index, hand horizontal, moves front to back), Z (index traces a Z). For these, `pose` is the starting handshape and `movement` describes the motion in Spanish. They are displayed but never scored in v0.1.
+With movement (6): J (I handshape, pinky traces a J), K (P handshape with a wrist turn; sources disagree on the turn), Ñ (N handshape with a side-to-side sway), Q (hand hanging from the wrist, index and thumb pointing down, with a sway; index shape varies; no source states where the palm faces, so loose orientation and cautious wording), X (fist with hooked index, hand horizontal, palm sideways toward the body midline, knuckles forward, loose orientation; moves front to back), Z (index traces a Z). For these, `pose` is the starting handshape and `movement` describes the motion in Spanish. They are displayed but never scored in v0.1.
 
-Double letters LL and RR are not separate entries: the letter screens for L and R note that a double letter is the same handshape sliding sideways.
+Double letters LL and RR are not separate entries: the letter screens for L and R note that some sources describe them as the same handshape sliding sideways, and that this is not yet confirmed.
 
 Known engine limits to declare in `confusable` (decide from the tests, expected candidates): S/T/A/E fist variants, U/R, M/N is not one (finger count differs).
 
@@ -234,7 +238,7 @@ createCameraSource({video: HTMLVideoElement, onFrame, onState}): {start(): Promi
 createSyntheticSource({getTarget: () => Sign|null, onFrame, onState, script?}): {start(), stop()}
 ```
 
-Camera source: `getUserMedia({video: {facingMode: 'user', width: {ideal: 640}, height: {ideal: 480}}, audio: false})`; dynamic `import()` of the MediaPipe module; `FilesetResolver.forVisionTasks(wasmRoot)`; `HandLandmarker.createFromOptions(fileset, {baseOptions: {modelAssetPath, delegate: 'GPU'}, runningMode: 'VIDEO', numHands: 1})`, retrying once with `delegate: 'CPU'` if creation throws; on each animation frame where `video.currentTime` changed, `detectForVideo(video, performance.now())`; read `result.landmarks[0]`, `result.worldLandmarks[0]`, and handedness from `(result.handedness ?? result.handednesses)?.[0]?.[0]?.categoryName`. Map errors: `NotAllowedError` → `denied`, `NotFoundError`/`OverconstrainedError` → `no-camera`, missing `navigator.mediaDevices` or insecure context → `unsupported`, anything during library or model load → `load-error` (keep the message for "Detalles técnicos"). `stop()` stops tracks, closes the landmarker, cancels the frame loop. Pause detection when the page is hidden.
+Camera source: `getUserMedia({video: {facingMode: 'user', width: {ideal: 640}, height: {ideal: 480}}, audio: false})`; dynamic `import()` of the MediaPipe module; `FilesetResolver.forVisionTasks(wasmRoot)`; `HandLandmarker.createFromOptions(fileset, {baseOptions: {modelAssetPath, delegate: 'GPU'}, runningMode: 'VIDEO', numHands: 1})`, retrying once with `delegate: 'CPU'` if creation throws; on each animation frame where `video.currentTime` changed, `detectForVideo(video, performance.now())`; read `result.landmarks[0]`, `result.worldLandmarks[0]`, and handedness from `(result.handedness ?? result.handednesses)?.[0]?.[0]?.categoryName`. Map errors: `NotAllowedError` → `denied`, `NotFoundError`/`OverconstrainedError` → `no-camera`, missing `navigator.mediaDevices` or insecure context → `unsupported`, anything during library or model load → `load-error` (keep the message for "Detalles técnicos"). `stop()` stops tracks, closes the landmarker, cancels the frame loop. Pause detection when the page is hidden. If the source is stopped or restarted while `start()` awaits the camera, the library or the model, the stale `start()` stops its own stream's tracks (or closes its landmarker) and returns. iOS Safari: the video has `playsinline`, `muted` and `autoplay` set as properties and attributes, is attached to the document before `play()` (a clipped, transparent dock holds it while the stage is off the page), and is never `display: none` (hidden with opacity instead).
 
 Synthetic source: produces frames from the hand model with no camera. It plays a short loop per target: start from an open hand, move toward the target pose with a deliberately wrong finger for a moment, correct it, hold. Small noise for life. It emits the same `HandFrame` shape (world in the camera frame; image coords from a simple perspective projection centred in the frame). It powers "Probar sin cámara" and the browser tests. With `?fuente=sintetica` in the URL the practice screen uses it automatically; `&rapido=1` makes it reach the correct pose within 300 ms and hold.
 
@@ -268,7 +272,7 @@ createSession({signs: Sign[], now?: () => number}): {
  * @property {{done: string[], skipped: string[]}} tally
  */
 ```
-Static letters: smooth → features → match → hold. After `done`, phase `success` until `next()` (the screen calls it after 1.4 s or on the button). Dynamic letters: phase `observe`, never scored; the screen shows the movement text and a "Continuar" button.
+Static letters: smooth → features (both sides when the shape is inconclusive, see 5.2) → match → hold. After `done`, phase `success` until `next()` (the screen calls it after 1.4 s or on the button). During success the session keeps smoothing and matching and returns the match with `hold: 1`, so the live hand keeps its finger colours. Dynamic letters: phase `observe`, never scored; the screen shows the movement text and a "Continuar" button.
 
 ## 11. Screens and routes (hash router, `src/ui/router.js`)
 
@@ -300,8 +304,8 @@ WCAG AA contrast for every text pair and 3:1 for control boundaries and focus ri
 
 ## 13. Tooling
 
-- `npm test` → `node --test tests/unit/`; `npm run lint` → `eslint .`; `npm run typecheck` → `tsc -p tsconfig.json` (checkJs, noEmit); `npm run serve` → `node scripts/serve.mjs` (zero-dependency static server, port 4173); `npm run test:e2e` → `playwright test`; `npm run contrast` → `node scripts/contrast.mjs` (fails if any declared pair in `DESIGN.md`'s token table is under AA).
-- CI (`.github/workflows/ci.yml`): lint, typecheck, unit tests, contrast, e2e in Chromium at a phone viewport. Pages deploy (`pages.yml`) publishes the repo root on pushes to `main` after CI passes.
+- `npm test` → `node --test 'tests/unit/*.test.js'`; `npm run lint` → `eslint .`; `npm run typecheck` → `tsc -p tsconfig.json` (checkJs, noEmit); `npm run serve` → `node scripts/serve.mjs` (zero-dependency static server, port 4173); `npm run test:e2e` → `playwright test`; `npm run contrast` → `node scripts/contrast.mjs` (fails if any declared pair in `DESIGN.md`'s token table is under AA).
+- CI (`.github/workflows/ci.yml`): lint, typecheck, unit tests, contrast, e2e in Chromium at a phone viewport. Pages deploy (`pages.yml`) runs on `workflow_run` of CI completing successfully for a push to `main` (plus `workflow_dispatch`), checks out the commit CI tested and publishes the site files. Pages must be set to "GitHub Actions" once in the repo settings before the first deploy.
 - Browser tests use only the synthetic source: home loads with no console errors and no CSP violations; alphabet shows 27 cells; a letter screen opens; spelling "sol" leads to a practice of S, O, L; a full synthetic practice of two letters reaches the finished state; keyboard-only path through the home screen; no horizontal overflow at 320px.
 
 ## 14. Known limits of v0.1 (to state in the README and Acerca)
@@ -309,4 +313,6 @@ WCAG AA contrast for every text pair and 3:1 for control boundaries and focus ri
 - Handshapes are not yet validated by Deaf LSM users.
 - Matching thresholds were tuned on a synthetic hand model, not on recordings of real hands.
 - Letters with movement are shown, not recognised.
+- A relaxed open hand with slightly spread fingers can pass as B (the pair thresholds were widened to 0.15/0.35 for noise, section 5.3).
+- A flat hand shown back-to-camera with the other hand can pass as B: for a flat hand the shape cannot tell the side, and the tracker's label is not trusted, so both sides are tried (section 5.2).
 - The hand tracker and model load from a CDN on first camera use.
